@@ -24,7 +24,7 @@ app.use(cors())
 // console.log(client.collectionExists)
 
 const body = "NASA latest news"
-const userEmbedding = async () => await generateQueryEmbedding(body, {
+const userEmbedding = async (userQuery) => await generateQueryEmbedding(userQuery, {
   pooling: 'mean',
   normalize: true,
 })
