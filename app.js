@@ -1,18 +1,24 @@
-import {QdrantClient} from '@qdrant/js-client-rest';
-import express from 'express'
-import { pipeline } from '@xenova/transformers'
-import bodyParser from 'body-parser';
-import cors from 'cors'
+import { QdrantClient } from "@qdrant/js-client-rest";
+import express from "express";
+// import { pipeline } from '@xenova/transformers'
+import { pipeline } from "@huggingface/transformers";
+
+import bodyParser from "body-parser";
+import cors from "cors";
+import { models } from "./models.js";
 
 // TO connect to Qdrant running locally
 // const client = new QdrantClient({url: 'http://127.0.0.1:6333'});
 
 const client = new QdrantClient({ host: "localhost", port: 6333 });
-const generateQueryEmbedding = await pipeline('feature-extraction', 'Supabase/gte-small')
+const generateQueryEmbedding = await pipeline(
+  "feature-extraction",
+  models.mixedBreadDeepset.name
+);
 
-const app = express()
-app.use(bodyParser.json())
-app.use(cors())
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
 
 // console.log(client)
 // or connect to Qdrant Cloud
@@ -23,49 +29,43 @@ app.use(cors())
 
 // console.log(client.collectionExists)
 
-const body = "NASA latest news"
-const userEmbedding = async (userQuery) => await generateQueryEmbedding(userQuery, {
-  pooling: 'mean',
-  normalize: true,
-})
+const userEmbedding = async (userQuery) =>
+  await generateQueryEmbedding(userQuery, {
+    pooling: "mean",
+    normalize: true,
+  });
 
-
- const searchResults = async (embedding) => await client.query(
-    "collection_science", {
+const searchResults = async (embedding) =>
+  await client.query(models.mixedBreadDeepset.collection, {
     query: embedding,
-    limit: 5,
-    with_payload: true
-    });
-
-
-app.post('/search', async (req, res) => {
-    console.log(req.body)
-
-     console.log(req.body)
-    let embed = await userEmbedding(req.body.query)
-    
-    const embedding = Array.from(embed.data)
-
-    let results = await searchResults(embedding)
-
-    console.log(results)
-
-    if (results) {
-        res.status(200).json(results)
-    } else {
-        res.status(500).send("Error")
-    }
-})
-
-app.get('/', (req, res) => {
+    limit: 8,
+    with_payload: true,
   
+  });
 
+app.post("/search", async (req, res) => {
+  console.log(req.body);
 
-    res.status(200).send('Hi')
-})
+  console.log(req.body);
+  let embed = await userEmbedding(req.body.query);
+
+  const embedding = Array.from(embed.data);
+
+  let results = await searchResults(embedding)
+
+  console.log("72", results);
+
+  if (results) {
+    res.status(200).json(results);
+  } else {
+    res.status(500).send("Error");
+  }
+});
+
+app.get("/", (req, res) => {
+  res.status(200).send("Hi");
+});
 
 app.listen(3000, () => {
-    console.log('The application is listening...')
-})
-
-
+  console.log("The application is listening...");
+});
