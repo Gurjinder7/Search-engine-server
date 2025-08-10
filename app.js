@@ -38,7 +38,7 @@ const userEmbedding = async (userQuery) =>
 const searchResults = async (embedding) =>
   await client.query(models.mixedBreadDeepset.collection, {
     query: embedding,
-    limit: 8,
+    limit: 5,
     with_payload: true,
   
   });
